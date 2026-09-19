@@ -22,6 +22,11 @@ jobs:
         with:
           targets: x86_64-pc-windows-msvc
 
+      - name: Create env file
+        run: |
+          echo "VITE_API_ID=${{ secrets.VITE_API_ID }}" > .env
+          echo "VITE_API_HASH=${{ secrets.VITE_API_HASH }}" >> .env
+
       - name: Install dependencies
         run: npm install
 
