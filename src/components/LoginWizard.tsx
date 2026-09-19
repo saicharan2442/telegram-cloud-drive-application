@@ -28,8 +28,8 @@ export default function LoginWizard() {
   const saved = useRef(loadSavedConnection());
 
   const [step, setStep] = useState<Step>("api");
-  const apiId = import.meta.env.VITE_API_ID || "38615406";
-  const apiHash = import.meta.env.VITE_API_HASH || "PASTE_YOUR_API_HASH_HERE";
+  const apiId = (import.meta as any).env.VITE_API_ID || "38615406";
+  const apiHash = (import.meta as any).env.VITE_API_HASH || "PASTE_YOUR_API_HASH_HERE";
   const persist = true;
 
   const [phone, setPhone] = useState("");
@@ -509,6 +509,8 @@ export default function LoginWizard() {
 
         <p className="text-center text-xs text-muted">
           MTProto over WebSocket, straight to Telegram · No database · No backend · No bots
+          <br />
+          <span className="inline-block mt-3 text-[10px] font-bold tracking-widest text-accent uppercase bg-accent/10 border border-accent/20 px-3 py-1 rounded-full shadow-sm">Developed by saicharansada</span>
         </p>
       </div>
     </div>

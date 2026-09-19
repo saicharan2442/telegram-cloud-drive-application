@@ -46,8 +46,7 @@ export default function SettingsPage() {
   const [cleared, setCleared] = useState(false);
 
   const chip = (active: boolean) =>
-    `flex items-center gap-2 rounded-xl border px-3.5 py-2 text-sm transition ${
-      active ? "border-accent bg-accent/10 text-accent" : "border-line hover:bg-ink/5"
+    `flex items-center gap-2 rounded-xl border px-3.5 py-2 text-sm transition ${active ? "border-accent bg-accent/10 text-accent" : "border-line hover:bg-ink/5"
     }`;
 
   return (
@@ -61,7 +60,7 @@ export default function SettingsPage() {
             value={
               conn
                 ? `${conn.account.firstName ?? ""}${conn.account.username ? ` @${conn.account.username}` : ""}`.trim() ||
-                  conn.account.userId
+                conn.account.userId
                 : "—"
             }
           />
@@ -90,7 +89,7 @@ export default function SettingsPage() {
             onClick={() => void disconnect()}
             className="flex items-center gap-2 rounded-xl border border-rose-500/30 px-4 py-2 text-sm text-rose-500 hover:bg-rose-500/10"
           >
-            <LogOut size={15} /> Change API credentials / Log out
+            <LogOut size={15} /> Log out
           </button>
         </div>
         <p className="text-[11.5px] text-muted">

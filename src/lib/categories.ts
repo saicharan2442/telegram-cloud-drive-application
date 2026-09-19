@@ -15,6 +15,7 @@ export const CATEGORY_EXT: Record<Exclude<CategoryId, "other">, string[]> = {
     "json", "xml", "yml", "yaml", "cpp", "cc", "c", "h", "hpp", "rs", "go",
     "php", "rb", "sh", "bat", "ps1", "sql", "swift", "dart", "toml", "ini",
   ],
+  links: [],
 };
 
 const LOOKUP: Record<string, CategoryId> = (() => {
@@ -40,6 +41,7 @@ export const CATEGORIES: CategoryMeta[] = [
   { id: "archives", label: "Zip files", tone: "text-orange-500" },
   { id: "apps", label: "Applications", tone: "text-violet-500" },
   { id: "code", label: "Code", tone: "text-cyan-500" },
+  { id: "links", label: "Links", tone: "text-pink-500" },
   { id: "other", label: "Other", tone: "text-slate-400" },
 ];
 

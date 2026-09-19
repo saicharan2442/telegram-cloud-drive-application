@@ -19,6 +19,7 @@ import { DriveProvider, useDrive } from "./store/drive";
 import Sidebar, { type Route } from "./components/Sidebar";
 import Dashboard from "./components/Dashboard";
 import FileBrowser from "./components/FileBrowser";
+import LinksBrowser from "./components/LinksBrowser";
 import DetailsPanel from "./components/DetailsPanel";
 import PreviewModal from "./components/PreviewModal";
 import TransfersPanel from "./components/TransfersPanel";
@@ -49,6 +50,7 @@ function Shell() {
     loadAll,
     loadingMore,
     downloadFile,
+    downloadMultipleFiles,
   } = useDrive();
 
   const [route, setRoute] = useState<Route>({ page: "home" });
@@ -242,6 +244,13 @@ function Shell() {
           </div>
 
           <div className="ml-auto flex items-center gap-1.5">
+            <div className="mr-3 flex items-center justify-center">
+              <div className="badge-glow px-4 py-0.5 rounded-full">
+                <span className="badge-shine text-[11.5px] font-extrabold uppercase tracking-[0.15em] whitespace-nowrap">
+                  Developed by saicharansada
+                </span>
+              </div>
+            </div>
             {route.page === "files" && (
               <button
                 onClick={() => setSelected(new Set(visible.map(f => f.key)))}
@@ -370,32 +379,54 @@ function Shell() {
                     )}
                   </span>
                 </div>
-                <FileBrowser
-                  files={visible}
-                  view={settings.view}
-                  selected={selected}
-                  canDelete={conn?.channel.canDelete ?? false}
-                  onSelect={onSelect}
-                  onSelectMany={onSelectMany}
-                  onOpen={(f) => setPreview(f)}
-                  onDownload={(f) => void downloadFile(f)}
-                  onDelete={(f) =>
-                    setConfirmDelete(selected.has(f.key) && selectedFiles.length > 1 ? selectedFiles : [f])
-                  }
-                  loading={loading}
-                  emptyHint={
-                    <div className="max-w-md space-y-2 text-sm">
-                      <p className="font-medium text-ink">Nothing here yet</p>
-                      <p>
-                        {query
-                          ? "No match in the history scanned so far. Use “Scan whole channel” above to search every message."
-                          : (conn?.channel.canPost
-                              ? "Upload files with the Upload button or drag them here, or load older history to pull in existing files."
-                              : "Load older history to pull in existing files.")}
-                      </p>
-                    </div>
-                  }
-                />
+                {route.category === "links" ? (
+                  <LinksBrowser
+                    files={visible}
+                    emptyHint={
+                      <div className="max-w-md space-y-2 text-sm">
+                        <p className="font-medium text-ink">No links found</p>
+                        <p>
+                          {query
+                            ? "No matching links in the history scanned so far. Use “Scan whole channel” above to search every message."
+                            : "Load older history to pull in messages with links."}
+                        </p>
+                      </div>
+                    }
+                  />
+                ) : (
+                  <FileBrowser
+                    files={visible}
+                    view={settings.view}
+                    selected={selected}
+                    canDelete={conn?.channel.canDelete ?? false}
+                    onSelect={onSelect}
+                    onSelectMany={onSelectMany}
+                    onOpen={(f) => setPreview(f)}
+                    onDownload={(f) => {
+                      if (selected.size > 1 && selected.has(f.key)) {
+                        void downloadMultipleFiles(selectedFiles);
+                      } else {
+                        void downloadFile(f);
+                      }
+                    }}
+                    onDelete={(f) =>
+                      setConfirmDelete(selected.has(f.key) && selectedFiles.length > 1 ? selectedFiles : [f])
+                    }
+                    loading={loading}
+                    emptyHint={
+                      <div className="max-w-md space-y-2 text-sm">
+                        <p className="font-medium text-ink">Nothing here yet</p>
+                        <p>
+                          {query
+                            ? "No match in the history scanned so far. Use “Scan whole channel” above to search every message."
+                            : (conn?.channel.canPost
+                                ? "Upload files with the Upload button or drag them here, or load older history to pull in existing files."
+                                : "Load older history to pull in existing files.")}
+                        </p>
+                      </div>
+                    }
+                  />
+                )}
               </>
             )}
 

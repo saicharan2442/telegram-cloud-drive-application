@@ -179,6 +179,37 @@ export function mapMessage(msg: any): DriveFile | null {
   return null;
 }
 
+const URL_REGEX = /https?:\/\/[^\s]+/g;
+
+function extractLinks(msg: any): DriveFile[] {
+  if (!msg || msg._ !== "message" || typeof msg.message !== "string") return [];
+  const text = msg.message;
+  const urls: string[] = text.match(URL_REGEX) || [];
+  
+  const entities = msg.entities || [];
+  for (const ent of entities) {
+    if (ent._ === "messageEntityTextUrl" && ent.url) {
+      urls.push(ent.url);
+    } else if (ent._ === "messageEntityUrl") {
+      const url = text.slice(ent.offset, ent.offset + ent.length);
+      if (url.startsWith("http")) urls.push(url);
+      else urls.push(`https://${url}`);
+    }
+  }
+
+  const uniqueUrls = Array.from(new Set(urls));
+  
+  return uniqueUrls.map((url, i) => ({
+    key: `m${msg.id}_l${i}`,
+    messageId: msg.id,
+    name: url,
+    ext: "link",
+    category: "links",
+    date: msg.date,
+    caption: text,
+  }));
+}
+
 /* ------------------------------------------------------------ history page */
 
 export interface HistoryPage {
@@ -212,7 +243,12 @@ export async function loadHistoryPage(
     hash: 0,
   });
   const messages: any[] = res?.messages ?? [];
-  const files = messages.map(mapMessage).filter(Boolean) as DriveFile[];
+  const files: DriveFile[] = [];
+  for (const msg of messages) {
+    const file = mapMessage(msg);
+    if (file) files.push(file);
+    files.push(...extractLinks(msg));
+  }
   const last = messages[messages.length - 1];
   return {
     files,
@@ -288,6 +324,7 @@ export async function downloadBlob(
   file: DriveFile,
   opts: DownloadOpts = {},
 ): Promise<Blob> {
+  if (!file.loc) throw new TgError("This item has no downloadable file.", 0);
   let loc = file.loc;
   const parts: Uint8Array[] = [];
   let offset = 0;
@@ -309,7 +346,7 @@ export async function downloadBlob(
       if (!refreshed && String(e?.message ?? "").includes("file reference")) {
         refreshed = true;
         const fresh = await refreshFile(client, channel, file.messageId);
-        if (!fresh) throw e;
+        if (!fresh || !fresh.loc) throw e;
         loc = fresh.loc;
         continue;
       }
@@ -340,6 +377,7 @@ export async function downloadThumb(
   client: TgClient,
   file: DriveFile,
 ): Promise<Blob | null> {
+  if (!file.loc) return null;
   const type = file.loc.thumbType;
   if (!type) return null;
   const res: any = await client.call(

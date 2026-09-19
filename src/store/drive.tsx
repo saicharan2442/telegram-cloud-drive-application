@@ -66,6 +66,7 @@ interface DriveCtx {
   clearFinished: () => void;
 
   downloadFile: (f: DriveFile) => Promise<void>;
+  downloadMultipleFiles: (files: DriveFile[]) => Promise<void>;
   deleteFiles: (fs: DriveFile[]) => Promise<{ ok: number; failed: number }>;
   getMediaUrl: (f: DriveFile, onProgress?: (n: number) => void) => Promise<string>;
   getThumbUrl: (f: DriveFile) => Promise<string | null>;
@@ -544,6 +545,110 @@ export function DriveProvider({ children }: { children: React.ReactNode }) {
     [client, conn, patch, pushToast],
   );
 
+  const downloadMultipleFiles = useCallback(
+    async (filesToDownload: DriveFile[]) => {
+      if (!client || !conn || filesToDownload.length === 0) return;
+      const JSZip = (await import("jszip")).default;
+      const zip = new JSZip();
+
+      const now = new Date();
+      const folderName = `download_${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}_${String(now.getHours()).padStart(2, "0")}-${String(now.getMinutes()).padStart(2, "0")}-${String(now.getSeconds()).padStart(2, "0")}`;
+
+      pushToast("info", "Preparing to download and group files...");
+
+      let hasErrors = false;
+      const downloadedBlobs: { name: string; blob: Blob }[] = [];
+
+      for (const f of filesToDownload) {
+        const id = Math.random().toString(36).slice(2);
+        const ac = new AbortController();
+        setTransfers((ts) => [
+          {
+            id,
+            kind: "download",
+            name: f.name,
+            size: f.size,
+            loaded: 0,
+            state: "running",
+            fileRef: f,
+            abort: () => ac.abort(),
+          },
+          ...ts,
+        ]);
+        try {
+          const blob = await downloadBlob(client, conn.channel, f, {
+            signal: ac.signal,
+            onProgress: (loaded) => patch(id, { loaded }),
+          });
+
+          downloadedBlobs.push({ name: f.name, blob });
+          patch(id, { state: "done", loaded: blob.size, size: blob.size, abort: undefined });
+        } catch (e: any) {
+          hasErrors = true;
+          if (e?.name === "AbortError") {
+            patch(id, { state: "cancelled", abort: undefined });
+            continue;
+          }
+          const msg = (e as TgError).message ?? "Download failed.";
+          patch(id, { state: "error", error: msg, abort: undefined });
+          pushToast("error", `Download of “${f.name}” failed: ${msg}`);
+        }
+      }
+
+      if (downloadedBlobs.length === 0) {
+        if (!hasErrors) pushToast("error", "No files downloaded.");
+        return;
+      }
+
+      pushToast("info", "Compressing files into a ZIP folder...");
+
+      const nameCounts = new Map<string, number>();
+
+      for (const { name, blob } of downloadedBlobs) {
+        let uniqueName = name;
+        if (nameCounts.has(name.toLowerCase())) {
+          const count = nameCounts.get(name.toLowerCase())! + 1;
+          nameCounts.set(name.toLowerCase(), count);
+          const parts = name.split(".");
+          if (parts.length > 1) {
+            const ext = parts.pop();
+            uniqueName = `${parts.join(".")} (${count}).${ext}`;
+          } else {
+            uniqueName = `${name} (${count})`;
+          }
+        } else {
+          nameCounts.set(name.toLowerCase(), 1);
+        }
+        zip.file(uniqueName, blob);
+      }
+
+      try {
+        const zipBlob = await zip.generateAsync({ type: "blob" });
+        const anyWin = window as any;
+
+        if (anyWin.showSaveFilePicker) {
+          const handle = await anyWin.showSaveFilePicker({ suggestedName: `${folderName}.zip` });
+          const w = await handle.createWritable();
+          await w.write(zipBlob);
+          await w.close();
+        } else {
+          const url = URL.createObjectURL(zipBlob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = `${folderName}.zip`;
+          a.click();
+          setTimeout(() => URL.revokeObjectURL(url), 30_000);
+        }
+        pushToast("success", `Successfully downloaded ${folderName}.zip`);
+      } catch (e: any) {
+        if (e?.name !== "AbortError") {
+          pushToast("error", `Failed to save ZIP: ${e.message}`);
+        }
+      }
+    },
+    [client, conn, patch, pushToast, downloadFile],
+  );
+
   /* ------------------------------------------------------------- delete */
   const deleteFiles = useCallback(
     async (list: DriveFile[]) => {
@@ -594,6 +699,7 @@ export function DriveProvider({ children }: { children: React.ReactNode }) {
     cancelTransfer,
     clearFinished,
     downloadFile,
+    downloadMultipleFiles,
     deleteFiles,
     getMediaUrl,
     getThumbUrl,

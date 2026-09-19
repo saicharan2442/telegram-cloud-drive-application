@@ -92,9 +92,8 @@ export default function Dashboard({
           )}
           <span className="text-xs text-muted">
             {lastSync
-              ? `Synced ${new Date(lastSync).toLocaleTimeString()} · ${scanned} messages read${
-                  channelTotal ? ` of ${channelTotal}` : ""
-                }`
+              ? `Synced ${new Date(lastSync).toLocaleTimeString()} · ${scanned} messages read${channelTotal ? ` of ${channelTotal}` : ""
+              }`
               : "Not synced yet"}
           </span>
         </div>
@@ -129,7 +128,7 @@ export default function Dashboard({
         />
         <Stat
           label="Storage capacity"
-          value="Not published"
+          value="Unlimited"
           hint="Telegram exposes no quota for channels — no number is invented here"
         />
       </div>

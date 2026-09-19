@@ -29,10 +29,16 @@ export default function DetailsPanel({
   onPreview: () => void;
   onDelete: () => void;
 }) {
-  const { downloadFile, conn } = useDrive();
+  const { downloadFile, downloadMultipleFiles, conn } = useDrive();
 
-  const handleDownload = () => {
-    selectedFiles.forEach((f) => void downloadFile(f));
+  const handleDownload = async () => {
+    if (selectedFiles.length > 1) {
+      await downloadMultipleFiles(selectedFiles);
+    } else {
+      for (const f of selectedFiles) {
+        await downloadFile(f);
+      }
+    }
   };
 
   return (

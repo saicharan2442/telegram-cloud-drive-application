@@ -6,6 +6,7 @@ export type CategoryId =
   | "archives"
   | "apps"
   | "code"
+  | "links"
   | "other";
 
 /** Everything needed to ask Telegram for the bytes of a file. */
@@ -34,7 +35,7 @@ export interface DriveFile {
   /** unix seconds — Telegram message date */
   date?: number;
   caption?: string;
-  loc: FileLocation;
+  loc?: FileLocation;
   /** video/audio duration in seconds, when Telegram provided it */
   duration?: number;
 }

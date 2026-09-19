@@ -7,6 +7,7 @@ import {
   FileArchive,
   AppWindow,
   FileCode2,
+  Link as LinkIcon,
   File as FileIconBase,
 } from "lucide-react";
 import type { CategoryId, DriveFile } from "../lib/types";
@@ -21,6 +22,7 @@ const ICONS: Record<CategoryId, any> = {
   archives: FileArchive,
   apps: AppWindow,
   code: FileCode2,
+  links: LinkIcon,
   other: FileIconBase,
 };
 
@@ -52,7 +54,7 @@ export function Thumb({
   const [url, setUrl] = useState<string | null>(null);
   const [failed, setFailed] = useState(false);
 
-  const hasThumb = !!file.loc.thumbType;
+  const hasThumb = !!file.loc?.thumbType;
 
   // Thumbnails are only requested when the tile is actually near the viewport,
   // and each one is a few-KB Telegram thumb — never the full file.

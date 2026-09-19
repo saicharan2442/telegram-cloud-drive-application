@@ -10,8 +10,11 @@
   },
   "dependencies": {
     "@mtproto/core": "^6.3.0",
+    "@tauri-apps/api": "^2.11.1",
+    "@tauri-apps/plugin-fs": "^2.5.2",
     "clsx": "2.1.1",
     "events": "^3.3.0",
+    "jszip": "^3.10.2",
     "lucide-react": "^1.47.0",
     "qrcode.react": "^4.2.0",
     "react": "19.2.6",
