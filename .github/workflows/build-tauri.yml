@@ -1,0 +1,35 @@
+name: 'Build Tauri App'
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  build-tauri:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build the app
+        run: npx tauri build
+
+      - name: Upload Windows exe
+        uses: actions/upload-artifact@v4
+        with:
+          name: Telegram-Cloud-Drive-Windows-Installer
+          path: src-tauri/target/release/bundle/nsis/*.exe
