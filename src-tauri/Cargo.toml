@@ -1,0 +1,19 @@
+[package]
+name = "telegram-cloud-drive"
+version = "1.0.0"
+description = "Lightweight personal cloud drive backed by a private Telegram channel"
+edition = "2021"
+rust-version = "1.77"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = "s"
+panic = "abort"
+strip = true
